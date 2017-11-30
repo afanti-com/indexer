@@ -118,7 +118,7 @@ func (h HashTable) Show() {
 			
 			idf := h.ScoreIdf(item.df)
 			buf := fmt.Sprintf("%d %s %d %d %f\n", i, item.key, item.word_id, item.df, idf)
-			fmt.Printf(buf)
+			// fmt.Printf(buf)
 			item = item.next
 		}
 	}

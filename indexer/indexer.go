@@ -35,6 +35,7 @@ type Indexer struct {
 	index_buffer_ []bytes.Buffer
 	pre_doc_seq_c_ []int
 	index_dir_ string
+	logger *log
 }
 
 
@@ -53,6 +54,7 @@ func (index *Indexer) Init(index_dir string, idx_file string){
 	*(index.word_seq_) = 0
 	*(index.pre_word_seq_) = 0
 	index.partition_size_ = 128
+	index.logger = log.New(os.Stdout, "[indexer] ", log.Ldate|log.Ltime|log.Lshortfile)
 }
 
 func (index *Indexer) Release(){
@@ -64,7 +66,7 @@ func (index *Indexer) IndexAll(file string) int {
 
 	fin, err := os.Open(file)
 	if err != nil {
-		log.Fatal(err)
+		index.logger.Fatal(err)
 		return -1
 	}
 
@@ -94,7 +96,7 @@ func (index *Indexer) IndexAll(file string) int {
 		index.IndexOne(int(subject), question, doc_seq)
 
 		doc_seq++
-		fmt.Printf("finish doc: %d\n", doc_seq)
+		index.logger.Printf("finish doc: %d\n", doc_seq)
 		
 	}
 	
@@ -124,7 +126,7 @@ func (index *Indexer) IndexOne(subject int,
 	index.seg.DoSegment(question, &result)
 
 	for _, sr := range result {
-		// fmt.Printf("%s\t%s\t%d\n", sr.Word, sr.Tag, sr.Times)
+		// index.logger.Printf("%s\t%s\t%d\n", sr.Word, sr.Tag, sr.Times)
 
 		if !is_math && sr.Tag == "x" {
 			continue
@@ -257,7 +259,7 @@ func (index *Indexer) Merge() int {
 			}
 
 			if m != n {
-				log.Fatal("read write error")
+				index.logger.Fatal("read write error")
 				return -1
 			}
 
@@ -281,7 +283,7 @@ func (index *Indexer) Merge() int {
 	for ; word_id < *index.word_seq_; word_id++ {
 		buf = new(bytes.Buffer)
 		binary.Write(buf, binary.LittleEndian, index_offset[word_id])
-		fmt.Println("offset: ", word_id, index_offset[word_id])
+		index.logger.Println("offset: ", word_id, index_offset[word_id])
 		fout.Write(buf.Bytes())
 	}
 	

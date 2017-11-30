@@ -1,7 +1,6 @@
 package segment
 
 import (
-	_ "fmt"
 	"strings"
 	"github.com/yanyiwu/gojieba"
 )
@@ -30,7 +29,7 @@ func (s *Segment) Free() {
 
 
 func (s *Segment) DoSegment(text string, result *[]SegRes) {
-
+	// TODO: For simplicity, use gojieba module first
 	wordsMap := make(map[string]SegRes)
 	words := s.jieba.Cut(text, true)
 	for _, word := range words {
@@ -45,7 +44,6 @@ func (s *Segment) DoSegment(text string, result *[]SegRes) {
 		}
 	}
 
-	// result := make([]SegRes, len(wordsMap))
 	for _, sr := range wordsMap {
 		*result = append(*result, sr)
 	}
