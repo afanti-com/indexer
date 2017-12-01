@@ -27,7 +27,7 @@ func TestEncodeAndDecode(t *testing.T) {
 	// fmt.Println(len(b.Bytes()))
 	// fmt.Println(len(b.String()))
 
-	fout, err := os.OpenFile("compress.data", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	fout, err := os.OpenFile("compress.data", os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		t.Errorf("open file error")
 	}

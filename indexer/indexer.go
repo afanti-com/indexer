@@ -35,11 +35,18 @@ type Indexer struct {
 	index_buffer_ []bytes.Buffer
 	pre_doc_seq_c_ []int
 	index_dir_ string
-	logger *log
+	word_info_file_ string
+	doc_info_file_ string
+	logger *log.Logger
 }
 
 
-func (index *Indexer) Init(index_dir string, idx_file string){
+func (index *Indexer) Init(
+	index_dir string,
+	idx_file string,
+	word_info_file string,
+	doc_info_file string) {
+	
 	index.seg = new(segment.Segment)
 	index.seg.Init()
 	index.ht = new(hashtable.HashTable)
@@ -49,6 +56,8 @@ func (index *Indexer) Init(index_dir string, idx_file string){
 	index.pre_doc_seq_c_ = make([]int, 300000)
 	index.index_dir_ = index_dir
 	index.idx_file_ = idx_file
+	index.word_info_file_ = word_info_file
+	index.doc_info_file_ = doc_info_file
 	index.word_seq_ = new(int32)
 	index.pre_word_seq_ = new(int32)
 	*(index.word_seq_) = 0
@@ -106,9 +115,9 @@ func (index *Indexer) IndexAll(file string) int {
 
 	index.Merge()
 
-	/*
-	index.Complete()
-  */
+
+	index.Complete(doc_seq)
+
 	
 	return 0
 }
@@ -288,5 +297,32 @@ func (index *Indexer) Merge() int {
 	}
 	
 	fout.Close()
+	return 0
+}
+
+func (index *Indexer) Complete(doc_seq int) {
+	index.ht.Save(index.word_info_file_)
+	index.SaveDocInfo(doc_seq)
+	
+}
+
+func (index *Indexer) SaveDocInfo(doc_seq int) int {
+	fout, err := os.OpenFile(index.doc_info_file_, os.O_RDWR|os.O_CREATE, 0766)
+	if err != nil {
+		index.logger.Fatal(err)
+		return -1
+	}
+
+	fout.WriteString(fmt.Sprintf("%d\n", doc_seq))
+
+	for _, doc := range index.doc_info_ {
+		fout.WriteString(fmt.Sprintf("%d %d\n", doc.id, doc.doc_len))
+	}
+
+	if err := fout.Close(); err != nil {
+		index.logger.Fatal(err)
+		return -1
+	}
+	
 	return 0
 }
