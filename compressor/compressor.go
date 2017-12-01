@@ -6,13 +6,13 @@ import "io"
 func Encode(w io.Writer, n uint32) uint {
 	bytes := 0
 	switch {
-	case n < 256:
+	case n < 128:
 		bytes = 1
 		n = (n << 1)
-	case n < 65536:
+	case n < 16384:
 		bytes = 2
 		n = (n << 2) | 1
-	case n < 16777216:
+	case n < 2097152:
 		bytes = 3
 		n = (n << 3) | 3
 	default:

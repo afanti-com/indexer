@@ -10,7 +10,7 @@ import (
 
 func TestEncodeAndDecode(t *testing.T) {
 
-	raw := []uint32{0, 32, 20003, 60006, 300009}
+	raw := []uint32{0, 32, 2003, 60006, 300009, 16777218}
 	
 	fmt.Println("before encode:", raw)
 	
