@@ -315,8 +315,8 @@ func (index *Indexer) SaveDocInfo(doc_seq int) int {
 
 	fout.WriteString(fmt.Sprintf("%d\n", doc_seq))
 
-	for _, doc := range index.doc_info_ {
-		fout.WriteString(fmt.Sprintf("%d %d\n", doc.id, doc.doc_len))
+	for i := 0; i < doc_seq; i++ {
+		fout.WriteString(fmt.Sprintf("%d %d\n", index.doc_info_[i].id, index.doc_info_[i].doc_len))
 	}
 
 	if err := fout.Close(); err != nil {

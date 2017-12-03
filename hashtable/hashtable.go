@@ -139,8 +139,8 @@ func (h HashTable) Save(file string) int {
 			}
 			
 			idf := h.ScoreIdf(item.df)
-			buf := fmt.Sprintf("%d %s %d %d %f\n", i, item.key, item.word_id, item.df, idf)
-			fout.WriteString(buf)
+			fout.WriteString(fmt.Sprintf("%d %s %d %d %f\n",
+				i, item.key, item.word_id, item.df, idf))
 			item = item.next
 		}
 	}
