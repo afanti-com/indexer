@@ -132,13 +132,14 @@ func (s *Searcher) GetPosting(id int64, result *[]uint32){
 
 
 func (s *Searcher) Search(query string) SearchResList{
-	seg_result := make([]segment.SegRes, 0)
-	s.seg.DoSegment(query, &seg_result)
+
+	seg_result := s.seg.DoSegment(query)
 
 	is_math := false
 	score_map := make(map[uint32]float64)
 	
 	for _, sr := range seg_result {
+
 		// fmt.Printf("%s\t%s\t%d\n", sr.Word, sr.Tag, sr.Times)
 		
 		if !is_math && sr.Tag == "x" {
@@ -181,13 +182,6 @@ func (s *Searcher) Search(query string) SearchResList{
 	}
 
 	sort_result := s.SortMapByValue(score_map)
-
-	/*
-	for i, value := range sort_result {
-		fmt.Println(i, value.Qid, value.Score)
-	}
-  */
-
 	return sort_result
 }
 

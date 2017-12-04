@@ -61,6 +61,7 @@ func (index *Indexer) Init(
 	index.logger = log.New(os.Stdout, "[indexer] ", log.Ldate|log.Ltime|log.Lshortfile)
 }
 
+
 func (index *Indexer) Release(){
 	index.seg.Free()
 }
@@ -111,9 +112,7 @@ func (index *Indexer) IndexAll(file string) int {
 
 	index.Merge()
 
-
 	index.Complete(doc_seq)
-
 	
 	return 0
 }
@@ -127,10 +126,10 @@ func (index *Indexer) IndexOne(subject int,
 		is_math = true
 	}
 
-	result := make([]segment.SegRes, 0)
-	index.seg.DoSegment(question, &result)
+	seg_result := index.seg.DoSegment(question)
 
-	for _, sr := range result {
+	for _, sr := range seg_result {
+
 		// index.logger.Printf("%s\t%s\t%d\n", sr.Word, sr.Tag, sr.Times)
 
 		if !is_math && sr.Tag == "x" {
@@ -168,7 +167,7 @@ func (index *Indexer) IndexWord(
 	index.pre_doc_seq_c_[*word_id] = doc_seq
 
 	compressor.Encode(&index.index_buffer_[*word_id], uint32(inter))
-	// compressor.Encode(&index.index_buffer_[*word_id], uint32(times))
+	compressor.Encode(&index.index_buffer_[*word_id], uint32(times))
 
 	if len((index.index_buffer_[*word_id]).Bytes()) > 4096 {
 		index.WriteBuffer(*word_id)
@@ -176,7 +175,6 @@ func (index *Indexer) IndexWord(
 
 	return 0
 }
-
 
 
 func (index *Indexer) WriteBuffer(word_id int32) {
@@ -288,7 +286,7 @@ func (index *Indexer) Merge() int {
 	for ; word_id < *index.word_seq_; word_id++ {
 		buf = new(bytes.Buffer)
 		binary.Write(buf, binary.LittleEndian, index_offset[word_id])
-		index.logger.Println("offset: ", word_id, index_offset[word_id])
+		// index.logger.Println("offset: ", word_id, index_offset[word_id])
 		fout.Write(buf.Bytes())
 	}
 	

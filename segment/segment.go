@@ -28,9 +28,12 @@ func (s *Segment) Free() {
 }
 
 
-func (s *Segment) DoSegment(text string, result *[]SegRes) {
+func (s *Segment) DoSegment(text string) []SegRes {
+
 	// TODO: For simplicity, use gojieba module first
 	wordsMap := make(map[string]SegRes)
+	result := make([]SegRes, 0)
+
 	words := s.jieba.Cut(text, true)
 	for _, word := range words {
 		tag := strings.Split(strings.Join(s.jieba.Tag(word), ""), "/")[1]
@@ -45,7 +48,8 @@ func (s *Segment) DoSegment(text string, result *[]SegRes) {
 	}
 
 	for _, sr := range wordsMap {
-		*result = append(*result, sr)
+		result = append(result, sr)
 	}
 	
+	return result
 }
