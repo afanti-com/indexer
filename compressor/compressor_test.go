@@ -67,8 +67,7 @@ func TestEncodeAndDecode(t *testing.T) {
 	fmt.Println("buf read bytes: ", m)
 	fmt.Println(buf.Bytes())
 
-	result := make([]uint32, 0)
-	Decode(&buf, total_len, &result)
+	result := Decode(&buf, total_len)
 
 	fmt.Println("decode result:", result)
 

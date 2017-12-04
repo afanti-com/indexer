@@ -108,7 +108,8 @@ func (s *Searcher) LoadOffset() {
 }
 
 
-func (s *Searcher) GetPosting(id int64, result *[]uint32){
+func (s *Searcher) GetPosting(id int64) []uint32 {
+	result := make([]uint32, 0)
 	len := s.offset_list_[id + 1] - s.offset_list_[id]
 	if len > 0 {
 		fin, err := os.Open(s.idx_file_)
@@ -125,9 +126,11 @@ func (s *Searcher) GetPosting(id int64, result *[]uint32){
 		
 		var buf bytes.Buffer
 		_, err = buf.Write(bb)
-		compressor.Decode(&buf, uint(len), result)
+		result = compressor.Decode(&buf, uint(len))
 		fin.Close()
 	}
+	
+	return result
 }
 
 
@@ -161,8 +164,7 @@ func (s *Searcher) Search(query string) SearchResList{
 		var doc_id uint32 = 0
 		var freq uint32 = 0
 		// s.logger.Printf("word_id = %d", word_id)
-		result := make([]uint32, 0)
-		s.GetPosting(int64(word_id), &result)
+		result := s.GetPosting(int64(word_id))
 		// fmt.Println(" ===> result:", result)
 		for index, value := range result {
 			if index % 2 == 0 {

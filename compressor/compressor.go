@@ -32,7 +32,8 @@ func Encode(w io.Writer, n uint32) uint {
 	return uint(len)
 }
 
-func Decode(r io.Reader, len uint, result *[]uint32) {
+func Decode(r io.Reader, len uint) []uint32 {
+	result := make([]uint32, 0)
 	p := make([]byte, len)
 	_, err := r.Read(p)
 	if err != nil {
@@ -64,8 +65,10 @@ func Decode(r io.Reader, len uint, result *[]uint32) {
 		}
 		
 		value >>= bytes
-		*result = append(*result, value)
+		result = append(result, value)
 
 		index += bytes
 	}
+
+	return result
 }
