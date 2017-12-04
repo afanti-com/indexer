@@ -18,11 +18,6 @@ import (
 )
 
 
-type DocInfo struct {
-	id int
-	doc_len int
-	wordlist_len int
-}
 
 type Indexer struct {
 	idx_file_ string
@@ -31,7 +26,7 @@ type Indexer struct {
 	partition_size_ uint
 	seg *segment.Segment
 	ht *hashtable.HashTable
-	doc_info_ []DocInfo
+	doc_info_ []utils.DocInfo
 	index_buffer_ []bytes.Buffer
 	pre_doc_seq_c_ []int
 	index_dir_ string
@@ -51,7 +46,7 @@ func (index *Indexer) Init(
 	index.seg.Init()
 	index.ht = new(hashtable.HashTable)
 	index.ht.Init(1024*1024)
-	index.doc_info_ = make([]DocInfo, 100000)
+	index.doc_info_ = make([]utils.DocInfo, 100000)
 	index.index_buffer_ = make([]bytes.Buffer, 300000)
 	index.pre_doc_seq_c_ = make([]int, 300000)
 	index.index_dir_ = index_dir
@@ -89,6 +84,7 @@ func (index *Indexer) IndexAll(file string) int {
 			if err == io.EOF {
 				break
 			}
+			fin.Close()
 			return -1
 		}
 
@@ -99,8 +95,8 @@ func (index *Indexer) IndexAll(file string) int {
 		subject, _ := strconv.ParseInt(items[2], 10, 32)
 		question := items[3]
 
-		index.doc_info_[doc_seq].id = int(question_id)
-		index.doc_info_[doc_seq].doc_len = len(question)
+		index.doc_info_[doc_seq].Id = int(question_id)
+		index.doc_info_[doc_seq].DocLen = len(question)
 
 		index.IndexOne(int(subject), question, doc_seq)
 
@@ -172,7 +168,7 @@ func (index *Indexer) IndexWord(
 	index.pre_doc_seq_c_[*word_id] = doc_seq
 
 	compressor.Encode(&index.index_buffer_[*word_id], uint32(inter))
-	compressor.Encode(&index.index_buffer_[*word_id], uint32(times))
+	// compressor.Encode(&index.index_buffer_[*word_id], uint32(times))
 
 	if len((index.index_buffer_[*word_id]).Bytes()) > 4096 {
 		index.WriteBuffer(*word_id)
@@ -316,7 +312,7 @@ func (index *Indexer) SaveDocInfo(doc_seq int) int {
 	fout.WriteString(fmt.Sprintf("%d\n", doc_seq))
 
 	for i := 0; i < doc_seq; i++ {
-		fout.WriteString(fmt.Sprintf("%d %d\n", index.doc_info_[i].id, index.doc_info_[i].doc_len))
+		fout.WriteString(fmt.Sprintf("%d %d\n", index.doc_info_[i].Id, index.doc_info_[i].DocLen))
 	}
 
 	if err := fout.Close(); err != nil {

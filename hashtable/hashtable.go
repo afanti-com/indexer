@@ -5,10 +5,10 @@ import (
 	"os"
 	"fmt"
 	"log"
-	"math"
 	"bufio"
 	"strings"
 	"strconv"
+	"../utils"
 )
 
 
@@ -104,11 +104,6 @@ func (h HashTable) HashFun(key string) uint32 {
 }
 
 
-func (h HashTable) ScoreIdf(df uint32) float64 {
-	return math.Log((10000000.0 - float64(df) + 0.5) / (float64(df) + 0.5)); 
-}
-
-
 func (h HashTable) Show() {
 	for i, item := range h.table_ {
 		for {
@@ -116,7 +111,7 @@ func (h HashTable) Show() {
 				break
 			}
 			
-			idf := h.ScoreIdf(item.df)
+			idf := utils.ScoreIdf(10000000, item.df)
 			buf := fmt.Sprintf("%d %s %d %d %f\n", i, item.key, item.word_id, item.df, idf)
 			fmt.Printf(buf)
 			item = item.next
@@ -138,7 +133,7 @@ func (h HashTable) Save(file string) int {
 				break
 			}
 			
-			idf := h.ScoreIdf(item.df)
+			idf := utils.ScoreIdf(10000000, item.df)
 			fout.WriteString(fmt.Sprintf("%d %s %d %d %f\n",
 				i, item.key, item.word_id, item.df, idf))
 			item = item.next
