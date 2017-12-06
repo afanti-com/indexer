@@ -67,26 +67,23 @@ func (index *Indexer) Release(){
 }
 
 
-func (index *Indexer) IndexAll(file string) int {
+func (index *Indexer) IndexAll(file string) {
 
 	fin, err := os.Open(file)
 	if err != nil {
-		index.logger.Fatal(err)
-		return -1
+		panic(err)
 	}
-
+	defer fin.Close()
 
 	var doc_seq int = 0	
 	buf := bufio.NewReader(fin)
 	for {
-
 		line, err := buf.ReadString('\n')
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
-			fin.Close()
-			return -1
+			panic(err)
 		}
 
 		line = strings.TrimSpace(line)
@@ -102,24 +99,15 @@ func (index *Indexer) IndexAll(file string) int {
 		index.IndexOne(int(subject), question, doc_seq)
 
 		doc_seq++
-		index.logger.Printf("finish doc: %d\n", doc_seq)
-		
+		index.logger.Printf("finish index doc: %d\n", doc_seq)
 	}
-	
-	fin.Close()
 
 	index.Flush()
-
 	index.Merge()
-
 	index.Complete(doc_seq)
-	
-	return 0
 }
 
-func (index *Indexer) IndexOne(subject int,
-	question string,
-	doc_seq int) int {
+func (index *Indexer) IndexOne(subject int, question string, doc_seq int) {
 
 	is_math := false
 	if subject == 2 || subject == 22 || subject == 42 {
@@ -141,23 +129,12 @@ func (index *Indexer) IndexOne(subject int,
 		}
 		
 		var word_id int32 = -1
-		index.IndexWord(
-			sr.Word,
-			sr.Times,
-			doc_seq,
-			&word_id)
+		index.IndexWord(sr.Word, sr.Times, doc_seq, &word_id)
 	}
-
-	return 0
 }
 
 
-func (index *Indexer) IndexWord(
-	word string,
-	times int,
-	doc_seq int,
-	word_id *int32) int{
-
+func (index *Indexer) IndexWord(word string, times int, doc_seq int, word_id *int32) {
 	*word_id = index.ht.Insert(word, index.word_seq_)
 	if *(index.word_seq_) > *(index.pre_word_seq_) {
 		*(index.pre_word_seq_) = *(index.word_seq_)
@@ -172,13 +149,10 @@ func (index *Indexer) IndexWord(
 	if len((index.index_buffer_[*word_id]).Bytes()) > 4096 {
 		index.WriteBuffer(*word_id)
 	}
-
-	return 0
 }
 
 
 func (index *Indexer) WriteBuffer(word_id int32) {
-
 	filename := fmt.Sprintf("%s/%d/%d",
 		index.index_dir_,
 		uint(word_id) % index.partition_size_,
@@ -188,13 +162,12 @@ func (index *Indexer) WriteBuffer(word_id int32) {
 	if err != nil {
 		panic(err)
 	}
-
+	defer fout.Close()
+	
 	_, err = index.index_buffer_[word_id].WriteTo(fout)
 	if err != nil {
 		panic(err)
 	}
-	
-	fout.Close()	
 }
 
 
@@ -210,23 +183,24 @@ func (index *Indexer) Flush() {
 			if err != nil {
 				panic(err)
 			}
-			
+
 			_, err = index.index_buffer_[word_id].WriteTo(fout)
 			if err != nil {
+				fout.Close()
 				panic(err)
 			}
-			
-			fout.Close()	
+			fout.Close()
 		}
 	}
 }
 
-func (index *Indexer) Merge() int {
+func (index *Indexer) Merge() {
 	
 	fout, err := os.OpenFile(index.idx_file_, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		panic(err)
 	}
+	defer fout.Close()
 
 	index_offset := make([]int64, *index.word_seq_)
 	var offset int64 = 0
@@ -262,8 +236,7 @@ func (index *Indexer) Merge() int {
 			}
 
 			if m != n {
-				index.logger.Fatal("read write error")
-				return -1
+				panic("read write error")
 			}
 
 			if m < k_buf_size {
@@ -271,7 +244,6 @@ func (index *Indexer) Merge() int {
 			}
 			
 		}
-		fin.Close()
 
 		offset, err = fout.Seek(0, os.SEEK_CUR)
 		index_offset[word_id] = offset
@@ -289,9 +261,6 @@ func (index *Indexer) Merge() int {
 		// index.logger.Println("offset: ", word_id, index_offset[word_id])
 		fout.Write(buf.Bytes())
 	}
-	
-	fout.Close()
-	return 0
 }
 
 func (index *Indexer) Complete(doc_seq int) {
@@ -300,23 +269,16 @@ func (index *Indexer) Complete(doc_seq int) {
 	
 }
 
-func (index *Indexer) SaveDocInfo(doc_seq int) int {
+func (index *Indexer) SaveDocInfo(doc_seq int) {
 	fout, err := os.OpenFile(index.doc_info_file_, os.O_RDWR|os.O_CREATE, 0766)
 	if err != nil {
-		index.logger.Fatal(err)
-		return -1
+		panic(err)
 	}
+	defer fout.Close()
 
 	fout.WriteString(fmt.Sprintf("%d\n", doc_seq))
 
 	for i := 0; i < doc_seq; i++ {
 		fout.WriteString(fmt.Sprintf("%d %d\n", index.doc_info_[i].Id, index.doc_info_[i].DocLen))
 	}
-
-	if err := fout.Close(); err != nil {
-		index.logger.Fatal(err)
-		return -1
-	}
-	
-	return 0
 }

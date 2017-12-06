@@ -1,4 +1,5 @@
 data/
-word_info.txt
+test/
 *~
 #*#
+*.dat

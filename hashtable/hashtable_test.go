@@ -1,7 +1,6 @@
 package hashtable
 
 import (
-	_ "fmt"
 	"testing"
 )
 
@@ -45,15 +44,15 @@ func TestHashtableShow(t *testing.T) {
 	ht.Insert("hello", &word_seq)
 
 	ht.Show()
-	ret := ht.Save("word_info.txt")
-	if ret != 0 {
+	ret := ht.Save("word_info.dat")
+	if ret != nil {
 		t.Errorf("hashtable save word info error")
 	}
 	
 	new_ht := new(HashTable)
 	new_ht.Init(size)
-	ret = new_ht.Load("word_info.txt")
-	if ret != 0 {
+	ret = new_ht.Load("word_info.dat")
+	if ret != nil {
 		t.Errorf("hashtable load word info error")
 	}
 	

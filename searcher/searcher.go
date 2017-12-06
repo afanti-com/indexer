@@ -1,7 +1,6 @@
 package searcher
 
 import (
-	_ "fmt"
 	"os"
 	"io"
 	"bytes"
@@ -80,7 +79,8 @@ func (s *Searcher) LoadOffset() {
 	if err != nil {
 		panic(err)
 	}
-
+	defer fin.Close()
+	
 	var offset_size int64 = 0
 	bb := make([]byte, unsafe.Sizeof(offset_size))
 	_, err = fin.Read(bb)
@@ -103,8 +103,6 @@ func (s *Searcher) LoadOffset() {
 		_ = binary.Read(bytes.NewReader(bb), binary.LittleEndian, &one)
 		s.offset_list_[i] = one
 	}
-	
-	fin.Close()
 }
 
 
@@ -116,6 +114,8 @@ func (s *Searcher) GetPosting(id int64) []uint32 {
 		if err != nil {
 			panic(err)
 		}
+		defer fin.Close()
+		
 		_, err = fin.Seek(s.offset_list_[id], 0)
 
 		bb := make([]byte, len)
@@ -127,7 +127,6 @@ func (s *Searcher) GetPosting(id int64) []uint32 {
 		var buf bytes.Buffer
 		_, err = buf.Write(bb)
 		result = compressor.Decode(&buf, uint(len))
-		fin.Close()
 	}
 	
 	return result
@@ -143,7 +142,7 @@ func (s *Searcher) Search(query string) SearchResList{
 	
 	for _, sr := range seg_result {
 
-		// fmt.Printf("%s\t%s\t%d\n", sr.Word, sr.Tag, sr.Times)
+		// s.logger.Printf("%s\t%s\t%d\n", sr.Word, sr.Tag, sr.Times)
 		
 		if !is_math && sr.Tag == "x" {
 			continue
@@ -165,14 +164,14 @@ func (s *Searcher) Search(query string) SearchResList{
 		var freq uint32 = 0
 		// s.logger.Printf("word_id = %d", word_id)
 		result := s.GetPosting(int64(word_id))
-		// fmt.Println(" ===> result:", result)
+		// s.logger.Println(" ===> result:", result)
 		for index, value := range result {
 			if index % 2 == 0 {
 				doc_id = value + pre_doc_id
 				pre_doc_id = doc_id
 			} else {
 				freq = value
-				// fmt.Println("doc_id:", doc_id, "freq:", freq)
+				// s.logger.Println("doc_id:", doc_id, "freq:", freq)
 				score, ok := score_map[doc_id]
 				if !ok {
 					score_map[doc_id] = float64(freq) * utils.ScoreIdf(s.total_doc_, df)
@@ -188,19 +187,19 @@ func (s *Searcher) Search(query string) SearchResList{
 }
 
 
-func (s *Searcher) LoadDocInfo(doc_info_file string) int {
+func (s *Searcher) LoadDocInfo(doc_info_file string){
 
 	fin, err := os.Open(doc_info_file)
 	if err != nil {
-		s.logger.Fatal(err)
-		return -1
+		panic(err)
 	}
-
+	defer fin.Close()
+	
 	var doc_seq int64 = 0
 	buf := bufio.NewReader(fin)
 	line, err := buf.ReadString('\n')
 	if err != nil {
-		return -1
+		panic(err)
 	}
 
 	line = strings.TrimSpace(line)
@@ -214,8 +213,7 @@ func (s *Searcher) LoadDocInfo(doc_info_file string) int {
 			if err == io.EOF {
 				break
 			}
-			fin.Close()
-			return -1
+			panic(err)
 		}
 
 		line = strings.TrimSpace(line)
@@ -227,24 +225,19 @@ func (s *Searcher) LoadDocInfo(doc_info_file string) int {
 		doc_seq++
 	}
 
-	fin.Close()
-
 	if doc_seq != total_doc {
-		s.logger.Printf("oc_seq != total_doc\n")
-		return -1
+		panic("oc_seq != total_doc")
 	}
-
-	return 0
 }
 
 
-func (s *Searcher) LoadWordInfo(word_info_file string) int {
+func (s *Searcher) LoadWordInfo(word_info_file string) {
 
 	fin, err := os.Open(word_info_file)
 	if err != nil {
-		s.logger.Fatal(err)
-		return -1
+		panic(err)
 	}
+	defer fin.Close()
 
 	buf := bufio.NewReader(fin)
 
@@ -254,16 +247,14 @@ func (s *Searcher) LoadWordInfo(word_info_file string) int {
 			if err == io.EOF {
 				break
 			}
-			fin.Close()
-			return -1
+			panic(err)
 		}
 
 		line = strings.TrimSpace(line)
 		items := strings.Split(line, " ")
 
 		if len(items) != 5 {
-			s.logger.Printf("word info format error\n")
-			return -1
+			panic("word info format error")
 		}
 
 		// index, _ := strconv.ParseInt(items[0], 10, 32)
@@ -281,8 +272,4 @@ func (s *Searcher) LoadWordInfo(word_info_file string) int {
 		
 		s.word_info_[key] = WordInfo{word_id:word_id, df:df}
 	}
-
-	fin.Close()
-
-	return 0
 }

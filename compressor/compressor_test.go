@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"bytes"
+	"reflect"
 )
 
 
@@ -27,7 +28,7 @@ func TestEncodeAndDecode(t *testing.T) {
 	// fmt.Println(len(b.Bytes()))
 	// fmt.Println(len(b.String()))
 
-	fout, err := os.OpenFile("compress.data", os.O_CREATE|os.O_WRONLY, 0644)
+	fout, err := os.OpenFile("compress.dat", os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		t.Errorf("open file error")
 	}
@@ -44,7 +45,7 @@ func TestEncodeAndDecode(t *testing.T) {
 	
 	fmt.Println("writeto file bytes: ", n)
 
-	fin, err := os.Open("compress.data")
+	fin, err := os.Open("compress.dat")
 	if err != nil {
 		t.Errorf("open file error")
 	}
@@ -71,26 +72,7 @@ func TestEncodeAndDecode(t *testing.T) {
 
 	fmt.Println("decode result:", result)
 
-	if !isSliceEqual(raw, result) {
+	if !reflect.DeepEqual(raw, result) {
 		t.Errorf("decode result not equals raw data")
 	}
-
-}
-
-func isSliceEqual(a, b []uint32) bool {
-	if len(a) != len(b) {
-		return false
-	}
-
-	if (a == nil) != (b == nil) {
-		return false
-	}
-
-	for i, v := range a {
-		if v != b[i] {
-			return false
-		}
-	}
-
-	return true
 }

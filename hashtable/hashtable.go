@@ -19,6 +19,7 @@ type HashEntry struct {
 	next *HashEntry
 }
 
+
 type HashTable struct {
 	buckets_size_ uint32
 	table_ []*HashEntry
@@ -33,6 +34,7 @@ func (h *HashTable) Init(buckets_size uint32) {
 	h.used_buckets_ = 0
 	h.table_ = make([]*HashEntry, buckets_size)
 }
+
 
 func (h *HashTable) GetId(key string) int32 {
 	index := h.HashFun(key)
@@ -50,6 +52,7 @@ func (h *HashTable) GetId(key string) int32 {
 		}
 	}
 }
+
 
 func (h *HashTable) Insert(key string, word_seq *int32) int32 {
 	index := h.HashFun(key)
@@ -120,13 +123,15 @@ func (h HashTable) Show() {
 }
 
 
-func (h HashTable) Save(file string) int {
+func (h HashTable) Save(file string) error {
 	fout, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE, 0766)
 	if err != nil {
 		log.Fatal(err)
-		return -1
+		return err
 	}
-
+	
+	defer fout.Close()
+	
 	for i, item := range h.table_ {
 		for {
 			if item == nil {
@@ -140,21 +145,17 @@ func (h HashTable) Save(file string) int {
 		}
 	}
 	
-	if err := fout.Close(); err != nil {
-		log.Fatal(err)
-		return -1
-	}
-
-	return 0
+	return nil
 }
 
 
-func (h HashTable) Load(file string) int {
+func (h HashTable) Load(file string) error {
 	fin, err := os.Open(file)
 	if err != nil {
 		log.Fatal(err)
-		return -1
+		return err
 	}
+	defer fin.Close()
 	
 	buf := bufio.NewReader(fin)
 	for {
@@ -163,7 +164,7 @@ func (h HashTable) Load(file string) int {
 			if err == io.EOF {
 				break
 			}
-			return -1
+			return err
 		}
 		
 		line = strings.TrimSpace(line)
@@ -204,8 +205,7 @@ func (h HashTable) Load(file string) int {
 			pre = p
 			h.entry_num_++
 		}
-		
 	}
-	fin.Close()
-	return 0
+
+	return nil
 }
