@@ -51,9 +51,9 @@ func (s *Searcher) Init(idx_file string, word_info_file string, doc_info_file st
 	s.seg = new(segment.Segment)
 	s.seg.Init()
 	s.word_info_ = make(map[string]WordInfo)
-	s.LoadWordInfo(word_info_file)
-	s.LoadDocInfo(doc_info_file)
-	s.LoadOffset()
+	s.loadWordInfo(word_info_file)
+	s.loadDocInfo(doc_info_file)
+	s.loadOffset()
 	
 }
 
@@ -61,7 +61,7 @@ func (s *Searcher) Release(){
 	s.seg.Free()
 }
 
-func (s *Searcher) SortMapByValue(m map[uint32]float64) SearchResList {
+func (s *Searcher) sortMapByValue(m map[uint32]float64) SearchResList {
 	p := make(SearchResList, len(m))
 	i := 0
 	for k, v := range m {
@@ -74,7 +74,7 @@ func (s *Searcher) SortMapByValue(m map[uint32]float64) SearchResList {
 }
 
 
-func (s *Searcher) LoadOffset() {
+func (s *Searcher) loadOffset() {
 	fin, err := os.Open(s.idx_file_)
 	if err != nil {
 		panic(err)
@@ -182,12 +182,12 @@ func (s *Searcher) Search(query string) SearchResList{
 		}
 	}
 
-	sort_result := s.SortMapByValue(score_map)
+	sort_result := s.sortMapByValue(score_map)
 	return sort_result
 }
 
 
-func (s *Searcher) LoadDocInfo(doc_info_file string){
+func (s *Searcher) loadDocInfo(doc_info_file string){
 
 	fin, err := os.Open(doc_info_file)
 	if err != nil {
@@ -231,7 +231,7 @@ func (s *Searcher) LoadDocInfo(doc_info_file string){
 }
 
 
-func (s *Searcher) LoadWordInfo(word_info_file string) {
+func (s *Searcher) loadWordInfo(word_info_file string) {
 
 	fin, err := os.Open(word_info_file)
 	if err != nil {

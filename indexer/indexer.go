@@ -96,18 +96,18 @@ func (index *Indexer) IndexAll(file string) {
 		index.doc_info_[doc_seq].Id = int(question_id)
 		index.doc_info_[doc_seq].DocLen = len(question)
 
-		index.IndexOne(int(subject), question, doc_seq)
+		index.indexOne(int(subject), question, doc_seq)
 
 		doc_seq++
 		index.logger.Printf("finish index doc: %d\n", doc_seq)
 	}
 
-	index.Flush()
-	index.Merge()
-	index.Complete(doc_seq)
+	index.flush()
+	index.merge()
+	index.complete(doc_seq)
 }
 
-func (index *Indexer) IndexOne(subject int, question string, doc_seq int) {
+func (index *Indexer) indexOne(subject int, question string, doc_seq int) {
 
 	is_math := false
 	if subject == 2 || subject == 22 || subject == 42 {
@@ -129,12 +129,12 @@ func (index *Indexer) IndexOne(subject int, question string, doc_seq int) {
 		}
 		
 		var word_id int32 = -1
-		index.IndexWord(sr.Word, sr.Times, doc_seq, &word_id)
+		index.indexWord(sr.Word, sr.Times, doc_seq, &word_id)
 	}
 }
 
 
-func (index *Indexer) IndexWord(word string, times int, doc_seq int, word_id *int32) {
+func (index *Indexer) indexWord(word string, times int, doc_seq int, word_id *int32) {
 	*word_id = index.ht.Insert(word, index.word_seq_)
 	if *(index.word_seq_) > *(index.pre_word_seq_) {
 		*(index.pre_word_seq_) = *(index.word_seq_)
@@ -147,12 +147,12 @@ func (index *Indexer) IndexWord(word string, times int, doc_seq int, word_id *in
 	compressor.Encode(&index.index_buffer_[*word_id], uint32(times))
 
 	if len((index.index_buffer_[*word_id]).Bytes()) > 4096 {
-		index.WriteBuffer(*word_id)
+		index.writeBuffer(*word_id)
 	}
 }
 
 
-func (index *Indexer) WriteBuffer(word_id int32) {
+func (index *Indexer) writeBuffer(word_id int32) {
 	filename := fmt.Sprintf("%s/%d/%d",
 		index.index_dir_,
 		uint(word_id) % index.partition_size_,
@@ -171,7 +171,7 @@ func (index *Indexer) WriteBuffer(word_id int32) {
 }
 
 
-func (index *Indexer) Flush() {
+func (index *Indexer) flush() {
 	var word_id int32 = 0
 	for ; word_id < *index.word_seq_; word_id++ {
 		if len(index.index_buffer_[word_id].Bytes()) > 0 {
@@ -194,7 +194,7 @@ func (index *Indexer) Flush() {
 	}
 }
 
-func (index *Indexer) Merge() {
+func (index *Indexer) merge() {
 	
 	fout, err := os.OpenFile(index.idx_file_, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -242,7 +242,6 @@ func (index *Indexer) Merge() {
 			if m < k_buf_size {
 				break
 			}
-			
 		}
 
 		offset, err = fout.Seek(0, os.SEEK_CUR)
@@ -263,13 +262,13 @@ func (index *Indexer) Merge() {
 	}
 }
 
-func (index *Indexer) Complete(doc_seq int) {
+func (index *Indexer) complete(doc_seq int) {
 	index.ht.Save(index.word_info_file_)
-	index.SaveDocInfo(doc_seq)
+	index.saveDocInfo(doc_seq)
 	
 }
 
-func (index *Indexer) SaveDocInfo(doc_seq int) {
+func (index *Indexer) saveDocInfo(doc_seq int) {
 	fout, err := os.OpenFile(index.doc_info_file_, os.O_RDWR|os.O_CREATE, 0766)
 	if err != nil {
 		panic(err)

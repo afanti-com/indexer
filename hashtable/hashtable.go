@@ -5,6 +5,7 @@ import (
 	"os"
 	"fmt"
 	"log"
+	"errors"
 	"bufio"
 	"strings"
 	"strconv"
@@ -36,17 +37,17 @@ func (h *HashTable) Init(buckets_size uint32) {
 }
 
 
-func (h *HashTable) GetId(key string) int32 {
-	index := h.HashFun(key)
+func (h *HashTable) GetId(key string) (int32, error) {
+	index := h.hashFun(key)
 	p := h.table_[index]
 	
 	for {
 		if p == nil {
-			return -1
+			return -1, errors.New("key not exists")
 		}
 
 		if p.key == key {
-			return p.word_id
+			return p.word_id, nil
 		} else {
 			p = p.next
 		}
@@ -55,7 +56,7 @@ func (h *HashTable) GetId(key string) int32 {
 
 
 func (h *HashTable) Insert(key string, word_seq *int32) int32 {
-	index := h.HashFun(key)
+	index := h.hashFun(key)
 	if (h.table_[index] == nil) {
 		h.table_[index] = new(HashEntry)
 		h.table_[index].key = key
@@ -98,7 +99,7 @@ func (h *HashTable) Insert(key string, word_seq *int32) int32 {
 }
 
 
-func (h HashTable) HashFun(key string) uint32 {
+func (h HashTable) hashFun(key string) uint32 {
 	var sum uint32 = 0
 	for _, c := range key {
 		sum = ((sum << 5) + sum + uint32(c));

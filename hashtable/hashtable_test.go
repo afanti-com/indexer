@@ -28,8 +28,8 @@ func TestHashtableInsertAndGet(t *testing.T) {
 		t.Errorf("hashtable insert repetitive key error")
 	}
 
-	word_id = ht.GetId("world")
-	if word_id != 1 {
+	word_id, err := ht.GetId("world")
+	if err != nil || word_id != 1 {
 		t.Errorf("hashtable get key error")
 	}
 }
